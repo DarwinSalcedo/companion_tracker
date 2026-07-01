@@ -21,8 +21,10 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.platform.LocalContext
+import android.content.Context
+import android.content.ClipboardManager
+import android.content.ClipData
 import androidx.compose.ui.platform.testTag
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,6 +49,21 @@ fun AnalyticsListScreen(viewModel: AnalyticsViewModel = androidx.lifecycle.viewm
             TopAppBar(
                 title = { Text("Companion Tracker") },
                 actions = {
+                    val isBubbleEnabled by viewModel.isBubbleEnabled.collectAsState()
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        Text(
+                            text = "Bubble",
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                        Switch(
+                            checked = isBubbleEnabled,
+                            onCheckedChange = { viewModel.toggleBubble(it) }
+                        )
+                    }
                     IconButton(onClick = { viewModel.clearEvents() }) {
                         Icon(Icons.Default.Delete, contentDescription = "Clear Events")
                     }
@@ -114,7 +131,8 @@ fun AnalyticsEventItem(event: AnalyticsEvent) {
     val timeFormat = remember { SimpleDateFormat("dd/MM HH:mm:ss", Locale.getDefault()) }
     val timeString = timeFormat.format(Date(event.timestamp))
 
-    val clipboardManager = LocalClipboard.current
+    val context = LocalContext.current
+    val clipboardManager = remember { context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager }
 
     Card(
         modifier = Modifier
@@ -145,7 +163,9 @@ fun AnalyticsEventItem(event: AnalyticsEvent) {
                 )
                 
                 IconButton(
-                    onClick = { clipboardManager.setText(AnnotatedString(event.eventName)) },
+                    onClick = { 
+                        clipboardManager.setPrimaryClip(ClipData.newPlainText("Event Name", event.eventName)) 
+                    },
                     modifier = Modifier.size(32.dp).padding(4.dp)
                 ) {
                     Icon(
@@ -184,7 +204,9 @@ fun AnalyticsEventItem(event: AnalyticsEvent) {
                                 .testTag("event_data_${event.id}")
                         )
                         IconButton(
-                            onClick = { clipboardManager.setText(AnnotatedString(event.eventData)) },
+                            onClick = { 
+                                clipboardManager.setPrimaryClip(ClipData.newPlainText("Event Data", event.eventData)) 
+                            },
                             modifier = Modifier.size(32.dp).padding(4.dp)
                         ) {
                             Icon(

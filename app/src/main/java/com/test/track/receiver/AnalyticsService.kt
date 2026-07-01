@@ -12,14 +12,17 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import android.provider.Settings
+import android.content.Context
+import android.content.SharedPreferences
 import com.test.track.MainActivity
 import com.test.track.TrackerApplication
 import com.test.track.ui.FloatingBubbleManager
 
-class AnalyticsService : Service() {
+class AnalyticsService : Service(), SharedPreferences.OnSharedPreferenceChangeListener {
 
     private lateinit var analyticsReceiver: AnalyticsReceiver
     private var floatingBubbleManager: FloatingBubbleManager? = null
+    private lateinit var prefs: SharedPreferences
 
     override fun onCreate() {
         super.onCreate()
@@ -35,19 +38,38 @@ class AnalyticsService : Service() {
             ContextCompat.RECEIVER_EXPORTED
         )
 
-        if (Settings.canDrawOverlays(this)) {
-            val repository = (application as TrackerApplication).repository
-            floatingBubbleManager = FloatingBubbleManager(this, repository.events)
+        prefs = getSharedPreferences("CompanionPrefs", Context.MODE_PRIVATE)
+        prefs.registerOnSharedPreferenceChangeListener(this)
+
+        val repository = (application as TrackerApplication).repository
+        floatingBubbleManager = FloatingBubbleManager(this, repository.events)
+        
+        checkAndShowBubble()
+    }
+
+    private fun checkAndShowBubble() {
+        val enabled = prefs.getBoolean("bubble_enabled", true)
+        if (enabled && Settings.canDrawOverlays(this)) {
             floatingBubbleManager?.show()
+        } else {
+            floatingBubbleManager?.hide()
+        }
+    }
+
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
+        if (key == "bubble_enabled") {
+            checkAndShowBubble()
         }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        checkAndShowBubble()
         return START_STICKY
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        prefs.unregisterOnSharedPreferenceChangeListener(this)
         try {
             unregisterReceiver(analyticsReceiver)
             floatingBubbleManager?.hide()
