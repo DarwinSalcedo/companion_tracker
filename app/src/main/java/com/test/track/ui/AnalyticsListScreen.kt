@@ -16,8 +16,9 @@ import androidx.compose.ui.unit.dp
 import com.test.track.data.AnalyticsEvent
 import java.text.SimpleDateFormat
 import java.util.*
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.ui.platform.testTag
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,7 +74,7 @@ fun AnalyticsListScreen(viewModel: AnalyticsViewModel = androidx.lifecycle.viewm
 fun AnalyticsEventItem(event: AnalyticsEvent) {
     var expanded by remember { mutableStateOf(false) }
     
-    val timeFormat = remember { SimpleDateFormat("HH:mm:ss", Locale.getDefault()) }
+    val timeFormat = remember { SimpleDateFormat("dd/MM HH:mm:ss", Locale.getDefault()) }
     val timeString = timeFormat.format(Date(event.timestamp))
 
     Card(
@@ -89,6 +90,7 @@ fun AnalyticsEventItem(event: AnalyticsEvent) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
+                .testTag("event_item_${event.id}")
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -100,6 +102,7 @@ fun AnalyticsEventItem(event: AnalyticsEvent) {
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f)
+                        .testTag("event_name_${event.id}")
                 )
                 Text(
                     text = timeString,
@@ -111,12 +114,17 @@ fun AnalyticsEventItem(event: AnalyticsEvent) {
             
             AnimatedVisibility(visible = expanded) {
                 Column(modifier = Modifier.padding(top = 8.dp)) {
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        thickness = DividerDefaults.Thickness,
+                        color = DividerDefaults.color
+                    )
                     Text(
                         text = event.eventData,
                         fontFamily = FontFamily.Monospace,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.fillMaxWidth()
+                            .testTag("event_data_${event.id}")
                     )
                 }
             }

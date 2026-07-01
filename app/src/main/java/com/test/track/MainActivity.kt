@@ -14,6 +14,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import com.test.track.receiver.AnalyticsService
 import com.test.track.ui.AnalyticsListScreen
 
@@ -41,7 +43,19 @@ class MainActivity : ComponentActivity() {
             }
         }
         
-        startAnalyticsService()
+        checkOverlayPermission()
+    }
+
+    private fun checkOverlayPermission() {
+        if (!Settings.canDrawOverlays(this)) {
+            val intent = Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:$packageName")
+            )
+            startActivity(intent)
+        } else {
+            startAnalyticsService()
+        }
     }
 
     private fun startAnalyticsService() {
@@ -62,6 +76,13 @@ class MainActivity : ComponentActivity() {
             ) {
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (Settings.canDrawOverlays(this)) {
+            startAnalyticsService()
         }
     }
 }

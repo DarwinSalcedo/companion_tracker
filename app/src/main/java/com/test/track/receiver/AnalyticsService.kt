@@ -11,17 +11,22 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import android.provider.Settings
 import com.test.track.MainActivity
+import com.test.track.TrackerApplication
+import com.test.track.ui.FloatingBubbleManager
 
 class AnalyticsService : Service() {
 
-    private val analyticsReceiver = AnalyticsReceiver()
+    private lateinit var analyticsReceiver: AnalyticsReceiver
+    private var floatingBubbleManager: FloatingBubbleManager? = null
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
         startForeground(1, createNotification())
         
+        analyticsReceiver = AnalyticsReceiver()
         val filter = IntentFilter(AnalyticsReceiver.ACTION_ANALYTICS_EVENT)
         ContextCompat.registerReceiver(
             this,
@@ -29,6 +34,12 @@ class AnalyticsService : Service() {
             filter,
             ContextCompat.RECEIVER_EXPORTED
         )
+
+        if (Settings.canDrawOverlays(this)) {
+            val repository = (application as TrackerApplication).repository
+            floatingBubbleManager = FloatingBubbleManager(this, repository.events)
+            floatingBubbleManager?.show()
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -39,6 +50,7 @@ class AnalyticsService : Service() {
         super.onDestroy()
         try {
             unregisterReceiver(analyticsReceiver)
+            floatingBubbleManager?.hide()
         } catch (e: Exception) {
             // Ignored
         }
