@@ -64,6 +64,11 @@ class AnalyticsService : Service(), SharedPreferences.OnSharedPreferenceChangeLi
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         checkAndShowBubble()
+        if (intent?.action == "com.track.ACTION_EXPAND_BUBBLE") {
+            floatingBubbleManager?.expandState?.value = true
+        } else if (intent?.action == "com.track.ACTION_COLLAPSE_BUBBLE") {
+            floatingBubbleManager?.expandState?.value = false
+        }
         return START_STICKY
     }
 

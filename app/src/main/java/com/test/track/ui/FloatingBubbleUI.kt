@@ -20,11 +20,12 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import com.test.track.data.AnalyticsEvent
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
-fun FloatingBubbleUI(eventsFlow: Flow<List<AnalyticsEvent>>, onDrag: (Int, Int) -> Unit) {
+fun FloatingBubbleUI(eventsFlow: Flow<List<AnalyticsEvent>>, expandState: MutableStateFlow<Boolean>, onDrag: (Int, Int) -> Unit) {
     val events by eventsFlow.collectAsState(initial = emptyList())
-    var isExpanded by remember { mutableStateOf(false) }
+    val isExpanded by expandState.collectAsState()
 
     Row(
         verticalAlignment = Alignment.Top,
@@ -42,7 +43,7 @@ fun FloatingBubbleUI(eventsFlow: Flow<List<AnalyticsEvent>>, onDrag: (Int, Int) 
                         onDrag(dragAmount.x.toInt(), dragAmount.y.toInt())
                     }
                 }
-                .clickable { isExpanded = !isExpanded },
+                .clickable { expandState.value = !isExpanded },
             contentAlignment = Alignment.Center
         ) {
 

@@ -19,6 +19,7 @@ import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import com.test.track.data.AnalyticsEvent
 
 class BubbleLifecycleOwner : SavedStateRegistryOwner, LifecycleOwner, ViewModelStoreOwner {
@@ -44,6 +45,7 @@ class FloatingBubbleManager(private val context: Context, private val eventsFlow
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private var composeView: ComposeView? = null
     private var lifecycleOwner: BubbleLifecycleOwner? = null
+    val expandState = MutableStateFlow(false)
 
     @SuppressLint("ClickableViewAccessibility")
     fun show() {
@@ -65,6 +67,7 @@ class FloatingBubbleManager(private val context: Context, private val eventsFlow
             setContent {
                 FloatingBubbleUI(
                     eventsFlow = eventsFlow,
+                    expandState = expandState,
                     onDrag = { dx, dy ->
                         params.x += dx
                         params.y += dy

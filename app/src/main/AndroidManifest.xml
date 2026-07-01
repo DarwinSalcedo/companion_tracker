@@ -28,7 +28,7 @@
         
         <service
             android:name=".receiver.AnalyticsService"
-            android:exported="false"
+            android:exported="true"
             android:foregroundServiceType="dataSync" />
     </application>
 
