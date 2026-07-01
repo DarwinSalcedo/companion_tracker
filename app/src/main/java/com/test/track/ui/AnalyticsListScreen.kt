@@ -43,6 +43,8 @@ fun AnalyticsListScreen(viewModel: AnalyticsViewModel = androidx.lifecycle.viewm
             }
         }
     }
+    
+    val isHelpCardVisible by viewModel.isHelpCardVisible.collectAsState()
 
     Scaffold(
         topBar = {
@@ -97,6 +99,45 @@ fun AnalyticsListScreen(viewModel: AnalyticsViewModel = androidx.lifecycle.viewm
                 },
                 singleLine = true
             )
+            
+            if (isHelpCardVisible) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Record the events with this code",
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleSmall
+                            )
+                            IconButton(
+                                onClick = { viewModel.hideHelpCard() },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(Icons.Default.Clear, contentDescription = "Close Help")
+                            }
+                        }
+                        Text(
+                            text = "val intent = Intent(\"com.track.ACTION_ANALYTICS_EVENT\")\n" +
+                                   "intent.putExtra(\"event_name\", event)\n" +
+                                   "intent.putExtra(\"event_data\", bundle)\n" +
+                                   "context.sendBroadcast(intent)",
+                            fontFamily = FontFamily.Monospace,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+                }
+            }
             
             if (filteredEvents.isEmpty()) {
                 Box(

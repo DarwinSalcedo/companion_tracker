@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import androidx.core.content.edit
 
 class AnalyticsViewModel(
     private val repository: AnalyticsRepository,
@@ -23,9 +24,17 @@ class AnalyticsViewModel(
     private val _isBubbleEnabled = MutableStateFlow(prefs.getBoolean("bubble_enabled", true))
     val isBubbleEnabled: StateFlow<Boolean> = _isBubbleEnabled.asStateFlow()
 
+    private val _isHelpCardVisible = MutableStateFlow(prefs.getBoolean("help_card_visible", true))
+    val isHelpCardVisible: StateFlow<Boolean> = _isHelpCardVisible.asStateFlow()
+
     fun toggleBubble(enabled: Boolean) {
-        prefs.edit().putBoolean("bubble_enabled", enabled).apply()
+        prefs.edit { putBoolean("bubble_enabled", enabled) }
         _isBubbleEnabled.value = enabled
+    }
+
+    fun hideHelpCard() {
+        prefs.edit { putBoolean("help_card_visible", false) }
+        _isHelpCardVisible.value = false
     }
 
     fun clearEvents() {
