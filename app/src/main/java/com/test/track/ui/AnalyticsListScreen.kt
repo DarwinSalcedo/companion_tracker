@@ -17,13 +17,30 @@ import com.test.track.data.AnalyticsEvent
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.platform.testTag
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalyticsListScreen(viewModel: AnalyticsViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = AnalyticsViewModel.Factory)) {
     val events by viewModel.events.collectAsState(initial = emptyList())
+    var searchQuery by remember { mutableStateOf("") }
+    
+    val filteredEvents = remember(events, searchQuery) {
+        if (searchQuery.isEmpty()) {
+            events
+        } else {
+            events.filter { 
+                it.eventName.contains(searchQuery, ignoreCase = true) || 
+                it.eventData.contains(searchQuery, ignoreCase = true) 
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -41,29 +58,49 @@ fun AnalyticsListScreen(viewModel: AnalyticsViewModel = androidx.lifecycle.viewm
             )
         }
     ) { paddingValues ->
-        if (events.isEmpty()) {
-            Box(
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Listening for analytics events...",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(events, key = { it.id }) { event ->
-                    AnalyticsEventItem(event)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                placeholder = { Text("Search events...") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(Icons.Default.Clear, contentDescription = "Clear Search")
+                        }
+                    }
+                },
+                singleLine = true
+            )
+            
+            if (filteredEvents.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (events.isEmpty()) "Listening for analytics events..." else "No events match your search",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(filteredEvents, key = { it.id }) { event ->
+                        AnalyticsEventItem(event)
+                    }
                 }
             }
         }
@@ -76,6 +113,8 @@ fun AnalyticsEventItem(event: AnalyticsEvent) {
     
     val timeFormat = remember { SimpleDateFormat("dd/MM HH:mm:ss", Locale.getDefault()) }
     val timeString = timeFormat.format(Date(event.timestamp))
+
+    val clipboardManager = LocalClipboard.current
 
     Card(
         modifier = Modifier
@@ -104,6 +143,19 @@ fun AnalyticsEventItem(event: AnalyticsEvent) {
                     modifier = Modifier.weight(1f)
                         .testTag("event_name_${event.id}")
                 )
+                
+                IconButton(
+                    onClick = { clipboardManager.setText(AnnotatedString(event.eventName)) },
+                    modifier = Modifier.size(32.dp).padding(4.dp)
+                ) {
+                    Icon(
+                        Icons.Default.ContentCopy, 
+                        contentDescription = "Copy Event Name",
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                
                 Text(
                     text = timeString,
                     style = MaterialTheme.typography.bodySmall,
@@ -119,13 +171,30 @@ fun AnalyticsEventItem(event: AnalyticsEvent) {
                         thickness = DividerDefaults.Thickness,
                         color = DividerDefaults.color
                     )
-                    Text(
-                        text = event.eventData,
-                        fontFamily = FontFamily.Monospace,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.fillMaxWidth()
-                            .testTag("event_data_${event.id}")
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Text(
+                            text = event.eventData,
+                            fontFamily = FontFamily.Monospace,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.weight(1f)
+                                .testTag("event_data_${event.id}")
+                        )
+                        IconButton(
+                            onClick = { clipboardManager.setText(AnnotatedString(event.eventData)) },
+                            modifier = Modifier.size(32.dp).padding(4.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.ContentCopy, 
+                                contentDescription = "Copy Event Data",
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
             }
         }
